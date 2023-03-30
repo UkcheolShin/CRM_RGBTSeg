@@ -8,7 +8,7 @@ This is the official pytorch implementation of the paper:
  >
  >**Under Review**
  >
- >[[Paper]()] [[Project page]()]
+ >[[Paper]()] [[Project page](https://sites.google.com/view/crm4rgbtseg/)]
 
 ### Semantic Segmentation Result on MF, PST900, KP datasets
 <img src="img/result.png" width="900px"/>
@@ -169,12 +169,7 @@ Our code is licensed under a [MIT License](LICENSE).
 Please cite the following paper if you use our work in your research.
 
 ```
-    @article{shin2023comp,
-      title={Complementary Random Maksing for RGB-T Semantic Segmentation},
-      author={Shin, Ukcheol and Lee, Kyunghyun and Kweon, In So},
-      journal={Arxiv pre-print},
-      year={2023}
-    }
+TBA
 ```
 
 ## Related projects & Acknowledgement
