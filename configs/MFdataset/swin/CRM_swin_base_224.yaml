@@ -1,0 +1,13 @@
+_BASE_: ../Base-MFdataset-SemanticSegmentation.yaml
+MODEL:
+  SWIN:
+    EMBED_DIM: 128
+    DEPTHS: [2, 2, 18, 2]
+    NUM_HEADS: [4, 8, 16, 32]
+    WINDOW_SIZE: 7
+    APE: False
+    DROP_PATH_RATE: 0.3
+    PATCH_NORM: True
+    PRETRAIN_IMG_SIZE: 224
+    SHARE_START_IDX : 4 
+  WEIGHTS: "pretrained/swin_base_patch4_window7_224.pkl"

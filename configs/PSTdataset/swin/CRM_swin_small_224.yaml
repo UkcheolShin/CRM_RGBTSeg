@@ -1,0 +1,12 @@
+_BASE_: ../Base-PSTdataset-SemanticSegmentation.yaml
+MODEL:
+  SWIN:
+    EMBED_DIM: 96
+    DEPTHS: [2, 2, 18, 2]
+    NUM_HEADS: [3, 6, 12, 24]
+    WINDOW_SIZE: 7
+    APE: False
+    DROP_PATH_RATE: 0.3
+    PATCH_NORM: True
+    SHARE_START_IDX : 4 
+  WEIGHTS: "pretrained/swin_small_patch4_window7_224.pkl" # 1K pre-trained
