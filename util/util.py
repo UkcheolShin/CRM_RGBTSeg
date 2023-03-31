@@ -86,8 +86,7 @@ def make_save_dir(path_root, pred_name):
 # Note.
 # The unlabeled (or background) class of MF & PST900 dataset is 0. Their evaluations consider the unlabeled label.
 # Therefore, the index start from 0.
-# The unlabeled class of KAIST pedestrain dataset is 20. But, it doesn't consider the unlabeled class. 
-# Therefore, the number of class of KP dataset is 19.
+# The unlabeled class of KAIST pedestrain dataset is 19. But, it doesn't consider the unlabeled class. 
 def compute_results(conf_total):
     n_class =  conf_total.shape[0]
     start_index = 0
