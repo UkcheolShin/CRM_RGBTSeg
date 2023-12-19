@@ -19,7 +19,7 @@ Further visualization can be found in the video.
 
 ### Updates
 - 2023.03.30: Release evaluation code and pre-trained weights.
-- TBA: training code will be released upon paper acceptance.
+- 2023.12.19: Release training code
 
 ## Usage
 ### Installation
@@ -169,7 +169,12 @@ Our code is licensed under a [MIT License](LICENSE).
 Please cite the following paper if you use our work in your research.
 
 ```
-TBA
+    @article{shin2023comp,
+      title={Complementary Random Maksing for RGB-T Semantic Segmentation},
+      author={Shin, Ukcheol and Lee, Kyunghyun and Kweon, In So},
+      journal={Arxiv pre-print},
+      year={2023}
+    }
 ```
 
 ## Related projects & Acknowledgement

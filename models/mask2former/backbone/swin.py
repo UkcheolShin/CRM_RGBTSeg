@@ -660,6 +660,12 @@ class SwinTransformer(nn.Module):
         """Forward function."""
         x = self.patch_embed(x)
 
+        # Token Masking
+        if mask is not None:
+            B, L, _, _ = x.shape
+            mask_tokens = self.mask_token.expand(B, L, 1, 1)
+            x = x * (1. - mask) + mask_tokens * mask
+
         Wh, Ww = x.size(2), x.size(3)
         if self.ape:
             # interpolate the position embedding to the corresponding size

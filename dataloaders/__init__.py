@@ -4,6 +4,7 @@
 from .MF_dataset import MF_dataset
 from .KP_dataset import KP_dataset
 from .PST_dataset import PST_dataset
+from .augmentation import *
 
 def build_dataset(cfg):
     """

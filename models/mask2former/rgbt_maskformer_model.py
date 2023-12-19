@@ -194,54 +194,105 @@ class RGBTMaskFormer(nn.Module):
         images = [(x - self.pixel_mean) / self.pixel_std for x in images]
         images = ImageList.from_tensors(images, self.size_divisibility)
 
-        features = self.backbone(images.tensor)
-        outputs = self.sem_seg_head(features[0])
+        if self.training:
+            features = self.backbone(images.tensor)
+            outputs = self.sem_seg_head(features[0]) # input: aggregated RGB-T feature
+            outputs_rgb = self.sem_seg_head(features[1]) # input: RGB feature
+            outputs_thr = self.sem_seg_head(features[2]) # input: Thr feature
 
-        mask_cls_results = outputs["pred_logits"]
-        mask_pred_results = outputs["pred_masks"]
-        # upsample masks
-        mask_pred_results = F.interpolate(
-            mask_pred_results,
-            size=(images.tensor.shape[-2], images.tensor.shape[-1]),
-            mode="bilinear",
-            align_corners=False,
-        )
+            # masked inputs
+            if 'mask' in batched_inputs[0].keys() : 
+                masks = [x["mask"].to(self.device) for x in batched_inputs]                   
+                features_masked = self.backbone(images.tensor, torch.stack(masks))
+                outputs_masked = self.sem_seg_head(features_masked[0])
+                outputs_masked_rgb = self.sem_seg_head(features_masked[1])
+                outputs_masked_thr = self.sem_seg_head(features_masked[2])
 
-        del outputs
+            # prepare mask classification target
+            if "instances" in batched_inputs[0]:
+                gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+                targets = self.prepare_targets(gt_instances, images)
+            else:
+                targets = None
 
-        processed_results = []
-        for mask_cls_result, mask_pred_result, input_per_image, image_size in zip(
-            mask_cls_results, mask_pred_results, batched_inputs, images.image_sizes
-        ):
-            height = image_size[0]
-            width = image_size[1]           
-            processed_results.append({})
+            # bipartite matching-based loss
+            losses_rgbt = self.criterion(outputs, targets)
+            losses_rgb = self.criterion(outputs_rgb, targets)
+            losses_thr = self.criterion(outputs_thr, targets)
 
-            if self.sem_seg_postprocess_before_inference:
-                mask_pred_result = retry_if_cuda_oom(sem_seg_postprocess)(
-                    mask_pred_result, image_size, height, width
-                )
-                mask_cls_result = mask_cls_result.to(mask_pred_result)
+            losses_masked = 0
+            losses_self_comp = 0
+            losses_self_nlocal = 0
 
-            # semantic segmentation inference
-            if self.semantic_on:
-                r = retry_if_cuda_oom(self.semantic_inference)(mask_cls_result, mask_pred_result)
+            if 'mask' in batched_inputs[0].keys() : 
+                losses_masked = self.criterion(outputs_masked, targets)
+                losses_self_comp = (outputs['pred_logits'].detach() - outputs_masked['pred_logits']).abs().mean()
+                losses_self_nlocal = (outputs['pred_logits'].detach() - outputs_masked_rgb['pred_logits']).abs().mean()
+                losses_self_nlocal += (outputs['pred_logits'].detach() - outputs_masked_thr['pred_logits']).abs().mean()
 
-                if not self.sem_seg_postprocess_before_inference:
-                    r = retry_if_cuda_oom(sem_seg_postprocess)(r, image_size, height, width)
-                processed_results[-1]["sem_seg"] = r
+            for k in list(losses_rgbt.keys()):
+                if k in self.criterion.weight_dict:
+                    losses_rgbt[k] *= self.criterion.weight_dict[k]
+                    losses_rgb[k] *= self.criterion.weight_dict[k]
+                    losses_thr[k] *= self.criterion.weight_dict[k]
+                    if 'mask' in batched_inputs[0].keys() : 
+                        losses_masked[k] *= self.criterion.weight_dict[k]
+                else:
+                    # remove this loss if not specified in `weight_dict`
+                    losses_rgbt.pop(k)
+                    losses_rgb.pop(k)
+                    losses_thr.pop(k)
 
-            # panoptic segmentation inference
-            if self.panoptic_on:
-                panoptic_r = retry_if_cuda_oom(self.panoptic_inference)(mask_cls_result, mask_pred_result)
-                processed_results[-1]["panoptic_seg"] = panoptic_r
-            
-            # instance segmentation inference
-            if self.instance_on:
-                instance_r = retry_if_cuda_oom(self.instance_inference)(mask_cls_result, mask_pred_result)
-                processed_results[-1]["instances"] = instance_r
+            return losses_rgbt, losses_rgb, losses_thr, losses_masked, losses_self_comp, losses_self_nlocal
+        else:
+            features = self.backbone(images.tensor)
+            outputs = self.sem_seg_head(features[0])
 
-        return processed_results
+            mask_cls_results = outputs["pred_logits"]
+            mask_pred_results = outputs["pred_masks"]
+            # upsample masks
+            mask_pred_results = F.interpolate(
+                mask_pred_results,
+                size=(images.tensor.shape[-2], images.tensor.shape[-1]),
+                mode="bilinear",
+                align_corners=False,
+            )
+
+            del outputs
+
+            processed_results = []
+            for mask_cls_result, mask_pred_result, input_per_image, image_size in zip(
+                mask_cls_results, mask_pred_results, batched_inputs, images.image_sizes
+            ):
+                height = image_size[0]
+                width = image_size[1]           
+                processed_results.append({})
+
+                if self.sem_seg_postprocess_before_inference:
+                    mask_pred_result = retry_if_cuda_oom(sem_seg_postprocess)(
+                        mask_pred_result, image_size, height, width
+                    )
+                    mask_cls_result = mask_cls_result.to(mask_pred_result)
+
+                # semantic segmentation inference
+                if self.semantic_on:
+                    r = retry_if_cuda_oom(self.semantic_inference)(mask_cls_result, mask_pred_result)
+
+                    if not self.sem_seg_postprocess_before_inference:
+                        r = retry_if_cuda_oom(sem_seg_postprocess)(r, image_size, height, width)
+                    processed_results[-1]["sem_seg"] = r
+
+                # panoptic segmentation inference
+                if self.panoptic_on:
+                    panoptic_r = retry_if_cuda_oom(self.panoptic_inference)(mask_cls_result, mask_pred_result)
+                    processed_results[-1]["panoptic_seg"] = panoptic_r
+                
+                # instance segmentation inference
+                if self.instance_on:
+                    instance_r = retry_if_cuda_oom(self.instance_inference)(mask_cls_result, mask_pred_result)
+                    processed_results[-1]["instances"] = instance_r
+
+            return processed_results
 
     def prepare_targets(self, targets, images):
         h_pad, w_pad = images.tensor.shape[-2:]
