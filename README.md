@@ -1,16 +1,20 @@
 # Complementary Random Masking for RGB-T Semantic Segmentation
 
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complementary-random-masking-for-rgb-thermal/thermal-image-segmentation-on-mfn-dataset)](https://paperswithcode.com/sota/thermal-image-segmentation-on-mfn-dataset?p=complementary-random-masking-for-rgb-thermal)
+
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complementary-random-masking-for-rgb-thermal/thermal-image-segmentation-on-kp-day-night)](https://paperswithcode.com/sota/thermal-image-segmentation-on-kp-day-night?p=complementary-random-masking-for-rgb-thermal)
+
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complementary-random-masking-for-rgb-thermal/thermal-image-segmentation-on-pst900)](https://paperswithcode.com/sota/thermal-image-segmentation-on-pst900?p=complementary-random-masking-for-rgb-thermal)
+
 This is the official pytorch implementation of the paper:
 
  >Complementary Random Masking for RGB-T Semantic Segmentation
  >
  >[Ukcheol Shin](https://ukcheolshin.github.io/), Kyunghyun Lee, In So Kweon
  >
- >**Under Review**
- >
- >[[Paper]()] [[Project page](https://sites.google.com/view/crm4rgbtseg/)]
+ >[[Paper](https://arxiv.org/abs/2303.17386)] [[Project page](https://sites.google.com/view/crm4rgbtseg/)]
 
-### Semantic Segmentation Result on MF, PST900, KP datasets
+### Semantic Segmentation Result on MFNet, PST900, KAIST Pedestrian(KP) datasets
 <img src="img/result.png" width="900px"/>
 
 Further visualization can be found in the video.
