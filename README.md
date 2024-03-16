@@ -36,7 +36,7 @@ This codebase was developed and tested with the following packages.
 
 You can build your conda environment with the provided YAML file.
 ```bash
-conda env create --file environment.yml
+conda env create --file environment.yaml
 ```
 
 Or you can build it manually.
